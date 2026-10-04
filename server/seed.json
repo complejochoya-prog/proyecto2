@@ -1,0 +1,47 @@
+{
+  "mesas": [
+    {"id":"m1","numero":1,"sector":"salon","capacidad":4,"estado":"libre"},
+    {"id":"m2","numero":2,"sector":"salon","capacidad":4,"estado":"libre"},
+    {"id":"m3","numero":3,"sector":"salon","capacidad":6,"estado":"libre"},
+    {"id":"m4","numero":4,"sector":"salon","capacidad":2,"estado":"libre"},
+    {"id":"m5","numero":5,"sector":"patio","capacidad":8,"estado":"libre"},
+    {"id":"m6","numero":6,"sector":"patio","capacidad":4,"estado":"libre"},
+    {"id":"m7","numero":7,"sector":"terraza","capacidad":4,"estado":"libre"},
+    {"id":"m8","numero":8,"sector":"terraza","capacidad":6,"estado":"libre"},
+    {"id":"m9","numero":9,"sector":"canchas","capacidad":4,"estado":"libre"},
+    {"id":"m10","numero":10,"sector":"canchas","capacidad":4,"estado":"libre"}
+  ],
+  "espacios": [
+    {"id":"c1","name":"Cancha 1","type":"futbol","status":"libre","precioHora":15000,"isActive":true},
+    {"id":"c2","name":"Cancha 2","type":"futbol","status":"libre","precioHora":15000,"isActive":true},
+    {"id":"c3","name":"Cancha 3","type":"futbol","status":"libre","precioHora":18000,"isActive":true},
+    {"id":"c4","name":"Cancha 4","type":"padel","status":"libre","precioHora":12000,"isActive":true},
+    {"id":"s1","name":"Salón de Eventos","type":"quincho","status":"libre","precioHora":50000,"isActive":true}
+  ],
+  "productos": [
+    {"id":"1000","name":"Promo merienda","price":3500,"stock":50,"category":"cafeteria","icon":"coffee","destinoComanda":"bar","disponible":true},
+    {"id":"1020","name":"Café con leche chico","price":2500,"stock":80,"category":"cafeteria","icon":"coffee","destinoComanda":"bar","disponible":true},
+    {"id":"1021","name":"Medialuna","price":1000,"stock":60,"category":"cafeteria","icon":"bakery_dining","destinoComanda":"bar","disponible":true},
+    {"id":"1035","name":"Café con leche","price":3000,"stock":60,"category":"cafeteria","icon":"coffee","destinoComanda":"bar","disponible":true},
+    {"id":"1100","name":"Licuado ananá","price":4500,"stock":40,"category":"licuados","icon":"local_cafe","destinoComanda":"bar","disponible":true},
+    {"id":"1200","name":"Cheesecake","price":8000,"stock":15,"category":"tortas","icon":"cake","destinoComanda":"bar","disponible":true},
+    {"id":"1300","name":"Lata gaseosa Pepsi","price":3500,"stock":48,"category":"bebidas","icon":"local_cafe","destinoComanda":"bar","disponible":true},
+    {"id":"1304","name":"Agua mineral 500cc","price":3500,"stock":48,"category":"bebidas","icon":"water_drop","destinoComanda":"bar","disponible":true},
+    {"id":"1400","name":"Brahma 1L","price":6000,"stock":24,"category":"cervezas","icon":"sports_bar","destinoComanda":"bar","disponible":true},
+    {"id":"1401","name":"Corona 330cc","price":4500,"stock":24,"category":"cervezas","icon":"sports_bar","destinoComanda":"bar","disponible":true},
+    {"id":"1504","name":"Milanesa al plato","price":12000,"stock":25,"category":"carnes","icon":"dinner_dining","destinoComanda":"cocina","disponible":true},
+    {"id":"1505","name":"Milanesa napolitana","price":14000,"stock":25,"category":"carnes","icon":"dinner_dining","destinoComanda":"cocina","disponible":true},
+    {"id":"1600","name":"Lomito clásico","price":10000,"stock":30,"category":"lomos","icon":"lunch_dining","destinoComanda":"cocina","disponible":true},
+    {"id":"1700","name":"Burger clásica","price":9000,"stock":40,"category":"burgers","icon":"lunch_dining","destinoComanda":"cocina","disponible":true},
+    {"id":"1701","name":"Burger triple","price":12000,"stock":30,"category":"burgers","icon":"lunch_dining","destinoComanda":"cocina","disponible":true},
+    {"id":"1800","name":"Pizza muzzarella","price":9500,"stock":25,"category":"pizzas","icon":"local_pizza","destinoComanda":"cocina","disponible":true},
+    {"id":"1801","name":"Pizza especial","price":10000,"stock":20,"category":"pizzas","icon":"local_pizza","destinoComanda":"cocina","disponible":true},
+    {"id":"1900","name":"Fideos","price":11000,"stock":25,"category":"pastas","icon":"ramen_dining","destinoComanda":"cocina","disponible":true},
+    {"id":"2000","name":"Ensalada César","price":8000,"stock":20,"category":"ensaladas","icon":"eco","destinoComanda":"cocina","disponible":true},
+    {"id":"2100","name":"Papas clásicas","price":7000,"stock":40,"category":"papas","icon":"restaurant","destinoComanda":"cocina","disponible":true},
+    {"id":"2101","name":"Papas cheddar","price":8500,"stock":35,"category":"papas","icon":"restaurant","destinoComanda":"cocina","disponible":true},
+    {"id":"2200","name":"Tacos carne","price":9500,"stock":25,"category":"tacos","icon":"tapas","destinoComanda":"cocina","disponible":true},
+    {"id":"2304","name":"Mojito","price":6500,"stock":30,"category":"tragos","icon":"local_bar","destinoComanda":"bar","disponible":true},
+    {"id":"2308","name":"Fernet medida","price":6000,"stock":40,"category":"tragos","icon":"local_bar","destinoComanda":"bar","disponible":true}
+  ]
+}
