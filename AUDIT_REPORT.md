@@ -24,7 +24,9 @@ La prueba smoke verifica health, lectura, alta/edición/baja de productos, alta/
 - API: URL por defecto local en desarrollo y ruta relativa `/api` en producción; encabezados de solicitud fusionados correctamente.
 - Backend: CORS configurable por `API_ALLOWED_ORIGINS` en producción y encabezados HTTP defensivos.
 - Pedidos: operaciones de creación y actualización con ítems dentro de transacciones SQLite, para evitar pedidos parciales si falla una escritura.
-- Errores: respuestas JSON uniformes para rutas API desconocidas y errores de validación/SQLite.
+- Errores: respuestas JSON uniformes para rutas API desconocidas y errores de validación/SQLite; las solicitudes POST/PUT/PATCH sin un objeto JSON válido ahora reciben HTTP 400.
+- Ofertas: la actualización parcial conserva los campos omitidos, actualiza `descuentoMonto`, devuelve el registro actualizado y responde 404 si la oferta no existe.
+- Sincronización: el indicador de conexión ya no se declara online solo por inicializar listeners; cambia según el éxito o los fallos consecutivos de la API.
 - Configuración: agregado `.env.example`; completar los orígenes reales antes de desplegar.
 
 ## Hallazgos pendientes prioritarios
@@ -69,4 +71,4 @@ El smoke test cubre API/SQLite básicos. Faltan pruebas automatizadas de reserva
 4. Agregar validación por ruta y pruebas de negocio/end-to-end.
 5. Resolver los avisos de seguridad de dependencias tras revisar el árbol de advisories.
 
-El build y el smoke test actuales pasan; los hallazgos críticos de autenticación y aislamiento multi-tenant siguen abiertos.
+El build y el smoke test de la ejecución CI más reciente se deben revisar tras los últimos cambios; los hallazgos críticos de autenticación y aislamiento multi-tenant siguen abiertos.
