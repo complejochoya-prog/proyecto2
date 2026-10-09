@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   quality:
-    name: Typecheck, lint and build
+    name: Typecheck, server syntax and build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -26,7 +26,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Run lint
+      - name: Check server JavaScript syntax
         run: npm run lint
 
       - name: Typecheck and build production bundle
