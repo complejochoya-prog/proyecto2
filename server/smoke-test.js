@@ -50,6 +50,18 @@ try {
   assert.equal(health.ok, true);
   assert.equal(health.db, 'sqlite');
 
+  const invalidBodyResponse = await fetch(`${baseUrl}/api/productos`, { method: 'POST' });
+  assert.equal(invalidBodyResponse.status, 400, 'POST without JSON body must return 400');
+  const invalidBody = await invalidBodyResponse.json();
+  assert.equal(invalidBody.error, 'invalid_request');
+
+  const missingOfferResponse = await fetch(`${baseUrl}/api/ofertas/does-not-exist`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ titulo: 'No existe' }),
+  });
+  assert.equal(missingOfferResponse.status, 404, 'Updating a missing offer must return 404');
+
   const initialProducts = await request('/api/productos');
   assert.ok(Array.isArray(initialProducts), 'GET /api/productos must return an array');
 
@@ -160,7 +172,7 @@ try {
   assert.ok(!remainingOffers.some((item) => item.id === 'smoke-offer'));
   assert.ok(!remainingProducts.some((item) => item.id === 'smoke-product'));
 
-  console.log('API smoke tests passed: health, SQLite reads, product CRUD, transactional order/items CRUD, partial offer updates, sync snapshot.');
+  console.log('API smoke tests passed: health, SQLite reads, product CRUD, transactional order/items CRUD, request-body validation, partial offer updates, sync snapshot.');
 } finally {
   if (child.exitCode === null) {
     child.kill('SIGTERM');
