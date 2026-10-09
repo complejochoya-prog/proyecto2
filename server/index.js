@@ -272,26 +272,29 @@ app.post('/api/pedidos', (req, res) => {
   const p = req.body;
   const id = p.id || `ped-${Date.now()}`;
   const now = new Date().toISOString();
-  db.prepare(
-    `INSERT INTO pedidos (id,tipoPedido,mesaId,mozoId,clienteNombre,clienteTelefono,direccionDelivery,estado,total,createdAt,updatedAt)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
-  ).run(
-    id, p.tipoPedido, p.mesaId, p.mozoId, p.clienteNombre, p.clienteTelefono,
-    p.direccionDelivery, p.estado || 'borrador', p.total || 0, now, now
-  );
-  if (p.items?.length) {
+  const savePedido = db.transaction(() => {
+    db.prepare(
+      `INSERT INTO pedidos (id,tipoPedido,mesaId,mozoId,clienteNombre,clienteTelefono,direccionDelivery,estado,total,createdAt,updatedAt)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+    ).run(
+      id, p.tipoPedido, p.mesaId, p.mozoId, p.clienteNombre, p.clienteTelefono,
+      p.direccionDelivery, p.estado || 'borrador', p.total || 0, now, now
+    );
+    if (p.items?.length) {
     const ins = db.prepare(
       `INSERT INTO pedido_items (id,pedidoId,productoId,nombre,cantidad,precioUnitario,subtotal,notas,estadoItem,destinoComanda)
        VALUES (?,?,?,?,?,?,?,?,?,?)`
     );
-    for (const i of p.items) {
-      ins.run(
-        i.id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        id, i.productoId, i.nombre, i.cantidad, i.precioUnitario, i.subtotal,
-        i.notas, i.estadoItem || 'pendiente', i.destinoComanda
-      );
+      for (const i of p.items) {
+        ins.run(
+          i.id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          id, i.productoId, i.nombre, i.cantidad, i.precioUnitario, i.subtotal,
+          i.notas, i.estadoItem || 'pendiente', i.destinoComanda
+        );
+      }
     }
-  }
+  });
+  savePedido();
   const pedido = db.prepare('SELECT * FROM pedidos WHERE id=?').get(id);
   const items = db.prepare('SELECT * FROM pedido_items WHERE pedidoId=?').all(id);
   res.json({ ...pedido, items });
@@ -302,33 +305,36 @@ app.put('/api/pedidos/:id', (req, res) => {
   const cur = db.prepare('SELECT * FROM pedidos WHERE id=?').get(req.params.id);
   if (!cur) return res.status(404).json({ error: 'not found' });
   const now = new Date().toISOString();
-  db.prepare(
-    `UPDATE pedidos SET estado=?, total=?, clienteNombre=?, clienteTelefono=?, direccionDelivery=?, updatedAt=? WHERE id=?`
-  ).run(
-    p.estado ?? cur.estado,
-    p.total ?? cur.total,
-    p.clienteNombre ?? cur.clienteNombre,
-    p.clienteTelefono ?? cur.clienteTelefono,
-    p.direccionDelivery ?? cur.direccionDelivery,
-    now,
-    req.params.id
-  );
+  const updatePedido = db.transaction(() => {
+    db.prepare(
+      `UPDATE pedidos SET estado=?, total=?, clienteNombre=?, clienteTelefono=?, direccionDelivery=?, updatedAt=? WHERE id=?`
+    ).run(
+      p.estado ?? cur.estado,
+      p.total ?? cur.total,
+      p.clienteNombre ?? cur.clienteNombre,
+      p.clienteTelefono ?? cur.clienteTelefono,
+      p.direccionDelivery ?? cur.direccionDelivery,
+      now,
+      req.params.id
+    );
 
-  // Replace items if provided
+    // Replace items if provided
   if (Array.isArray(p.items)) {
     db.prepare('DELETE FROM pedido_items WHERE pedidoId=?').run(req.params.id);
     const ins = db.prepare(
       `INSERT INTO pedido_items (id,pedidoId,productoId,nombre,cantidad,precioUnitario,subtotal,notas,estadoItem,destinoComanda)
        VALUES (?,?,?,?,?,?,?,?,?,?)`
     );
-    for (const i of p.items) {
-      ins.run(
-        i.id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        req.params.id, i.productoId, i.nombre, i.cantidad, i.precioUnitario, i.subtotal,
-        i.notas, i.estadoItem || 'pendiente', i.destinoComanda
-      );
+      for (const i of p.items) {
+        ins.run(
+          i.id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          req.params.id, i.productoId, i.nombre, i.cantidad, i.precioUnitario, i.subtotal,
+          i.notas, i.estadoItem || 'pendiente', i.destinoComanda
+        );
+      }
     }
-  }
+  });
+  updatePedido();
 
   const pedido = db.prepare('SELECT * FROM pedidos WHERE id=?').get(req.params.id);
   const items = db.prepare('SELECT * FROM pedido_items WHERE pedidoId=?').all(req.params.id);
@@ -506,6 +512,21 @@ app.get('/api/sync', (_req, res) => {
   const cajaSesion = db.prepare('SELECT * FROM caja_sesion WHERE id=1').get();
   const cajaMovimientos = db.prepare('SELECT * FROM caja_movimientos ORDER BY createdAt DESC').all();
   res.json({ productos, mesas, espacios, reservas, clientes, pedidos, ofertas, cajaSesion, cajaMovimientos });
+});
+
+// Consistent JSON responses for unknown API routes and database/JSON errors.
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'not_found' });
+});
+
+app.use((err, _req, res, _next) => {
+  const constraintError = typeof err.code === 'string' && err.code.startsWith('SQLITE_CONSTRAINT');
+  const status = Number.isInteger(err.status) ? err.status : constraintError ? 400 : 500;
+  if (status >= 500) console.error('API error:', err);
+  res.status(status).json({
+    error: status >= 500 ? 'internal_server_error' : 'invalid_request',
+    message: status >= 500 ? 'Error interno del servidor' : err.message,
+  });
 });
 
 app.listen(PORT, () => {
