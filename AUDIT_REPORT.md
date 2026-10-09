@@ -1,44 +1,72 @@
 # Auditoría técnica — proyecto2
 
-Fecha: 2026-10-08. Rama de trabajo: `audit/fixes-initial`. PR: https://github.com/complejochoya-prog/proyecto2/pull/1
+Fecha: 2026-10-08. Cambios aplicados directamente en `main`. El PR de auditoría quedó cerrado para evitar duplicar los cambios.
 
 ## Alcance y validación
-Revisión estática de React/TypeScript/Vite, router, autenticación, guards, contexto tenant, sincronización Firestore, stores, API y servidor Express/SQLite. Se agregó CI para ejecutar `npm ci`, comprobaciones de sintaxis del servidor y `npm run build` en pull requests y pushes a `main`. La primera ejecución confirmó que la instalación y la sintaxis del servidor pasan, pero el build falla por errores TypeScript preexistentes detallados en la ejecución de GitHub Actions.
 
-## Cambios realizados en la rama
-- Corregidas las referencias PWA para usar el `public/favicon.svg` existente en lugar de recursos que no aparecían en el árbol revisado.
-- Mejorado el cierre de conexiones IndexedDB tras operaciones y ante cambios de versión.
-- Reemplazados comodines `*` de `better-sqlite3`, `concurrently`, `cors` y `express` por rangos compatibles con las versiones que ya estaban fijadas en el lockfile; sincronizados `package.json` y `package-lock.json`.
-- Añadido workflow CI de sintaxis del servidor, typecheck y build. La validación detectó errores TypeScript preexistentes que pasan a ser el siguiente objetivo de corrección.
+Revisión estática de React/TypeScript/Vite, rutas y guards, modelos de datos, stores, sincronización Firestore, API Express y persistencia SQLite.
+
+**CI en `main`: pasó** en la ejecución [37865046391](https://github.com/complejochoya-prog/proyecto2/actions/runs/37865046391):
+- `npm ci`
+- comprobación de sintaxis JavaScript del servidor
+- `npm run build` (TypeScript + bundle de producción)
+- `npm run test:smoke` (API y SQLite aislado)
+
+La prueba smoke verifica health, lectura, alta/edición/baja de productos, alta/edición/baja de pedidos con ítems y el snapshot de sincronización. No reemplaza pruebas end-to-end en navegador ni pruebas de concurrencia o seguridad.
+
+## Cambios aplicados en main
+
+- PWA: referencias de iconos alineadas con `public/favicon.svg`.
+- IndexedDB: cierre de conexiones tras transacciones y ante cambios de versión.
+- Dependencias: se reemplazaron comodines `*` por rangos compatibles con el lockfile y se sincronizaron ambos archivos.
+- CI: workflow de calidad con cancelación de ejecuciones antiguas y smoke test de la API.
+- Modelos TypeScript: se reconciliaron tipos legacy de canchas/reservas/usuarios con los tipos actuales para recuperar el typecheck. Los campos legacy opcionales son una transición, no una solución de aislamiento multi-tenant.
+- API: URL por defecto local en desarrollo y ruta relativa `/api` en producción; encabezados de solicitud fusionados correctamente.
+- Backend: CORS configurable por `API_ALLOWED_ORIGINS` en producción y encabezados HTTP defensivos.
+- Pedidos: operaciones de creación y actualización con ítems dentro de transacciones SQLite, para evitar pedidos parciales si falla una escritura.
+- Errores: respuestas JSON uniformes para rutas API desconocidas y errores de validación/SQLite.
+- Configuración: agregado `.env.example`; completar los orígenes reales antes de desplegar.
 
 ## Hallazgos pendientes prioritarios
 
-### CRÍTICO: autenticación solo en frontend
-`src/context/AuthContext.tsx` define usuarios de demostración en el cliente y restaura sesión desde localStorage. Los guards React no protegen la API. `server/index.js` expone operaciones CRUD sin middleware de autenticación/autorización visible. No usar con datos reales hasta autenticar y autorizar en servidor.
+### CRÍTICO — autenticación y autorización del servidor
 
-### CRÍTICO: aislamiento multi-tenant incompleto
-El backend fija `negocioId: 'giovanni'` y usa tablas globales; `src/lib/firebaseSync.ts` usa colecciones globales sin partición por negocio. Riesgo de mezcla de datos. Requiere migración coordinada de SQLite, Firestore y reglas de seguridad.
+`src/context/AuthContext.tsx` mantiene usuarios/contraseñas/PIN de demostración en el frontend y restaura sesión desde `localStorage`. Los guards de React solo protegen la interfaz. Las rutas CRUD de `server/index.js` todavía no exigen una identidad autenticada ni aplican roles en el servidor.
 
-### ALTO: CORS abierto
-`server/index.js` usa `app.use(cors())`. Configurar orígenes permitidos por entorno una vez confirmados los dominios.
+**No desplegar con datos reales ni exponer la API a Internet hasta implementar autenticación/autorización server-side.** La configuración CORS no sustituye autenticación.
 
-### ALTO: varias fuentes de persistencia
-`src/components/DbSync.tsx` combina Firestore y SQLite; `src/lib/firebaseSync.ts` intenta sembrar colecciones vacías desde estado local. Puede haber carreras y divergencias. Definir fuente de verdad y estrategia de migración.
+### CRÍTICO — aislamiento multi-tenant incompleto
 
-### ALTO: URL API por defecto local
-`src/lib/api.ts` usa `http://localhost:3001/api` si falta `VITE_API_URL`. En producción, localhost apunta al dispositivo del usuario. Configurar URL por entorno o ruta relativa/proxy.
+El backend usa tablas globales y asigna `negocioId: 'giovanni'` en algunos resultados. `src/lib/firebaseSync.ts` utiliza colecciones globales (`productos`, `mesas`, `reservas`, `clientes`, `pedidos`) sin partición por negocio visible. Esto puede mezclar datos entre negocios.
 
-### MEDIO: validación de API
-Las rutas CRUD no muestran validación centralizada de esquemas; hay IDs basados en `Date.now()` y errores inconsistentes. Agregar validación, códigos de error uniformes y transacciones para pedidos/ítems.
+Hace falta una migración coordinada de SQLite, Firestore, reglas de seguridad y pruebas de aislamiento antes de habilitar varios negocios.
 
-### MEDIO: pruebas de negocio ausentes
-Aún deben agregarse pruebas de autenticación/autorización, aislamiento tenant, caja, reservas, pedidos y sincronización. El workflow actual es una base de calidad, no reemplaza las pruebas funcionales.
+### ALTO — Firestore y SQLite compiten como fuentes de verdad
 
-## Plan de remediación
-1. Implementar autenticación y autorización server-side antes de exponer operaciones con datos reales.
-2. Aislar datos por negocio en SQLite y Firestore, con reglas y pruebas de seguridad.
-3. Establecer fuente de verdad y recuperación ante conflictos de sincronización.
-4. Configurar API/CORS por entorno y validar entradas en cada ruta.
-5. Agregar pruebas de negocio e integrar cambios gradualmente.
+`src/components/DbSync.tsx` combina ambas persistencias y `src/lib/firebaseSync.ts` intenta sembrar colecciones vacías desde el estado local. Pueden producirse carreras, escrituras duplicadas o divergencias. Hay que elegir una fuente de verdad y definir reconciliación/reintentos.
 
-Los hallazgos críticos no se consideran resueltos por ajustes de frontend ni por este primer conjunto de mejoras.
+### ALTO — CORS depende de configuración de despliegue
+
+En producción, definir `API_ALLOWED_ORIGINS` con los orígenes exactos del frontend. Si frontend y API están en dominios distintos, también definir `VITE_API_URL`. CORS limita el acceso desde navegadores; no bloquea clientes HTTP directos ni protege datos sin autenticación.
+
+### MEDIO — validación de entradas incompleta
+
+Se añadieron respuestas de error consistentes y transacciones para pedidos/ítems, pero todavía falta validación de esquema y reglas de negocio en todas las rutas CRUD, incluidos importes, estados, fechas y referencias.
+
+### MEDIO — vulnerabilidades de dependencias
+
+La instalación de dependencias reportó 6 avisos de seguridad (4 altos y 2 críticos). Deben identificarse los paquetes afectados con `npm audit` y actualizarse de forma controlada, sin usar actualizaciones forzadas que puedan romper la aplicación.
+
+### MEDIO — cobertura funcional todavía parcial
+
+El smoke test cubre API/SQLite básicos. Faltan pruebas automatizadas de reservas y disponibilidad, caja, permisos por rol, sincronización y conflictos offline, además de pruebas end-to-end de los flujos principales.
+
+## Próximos pasos recomendados
+
+1. Implementar autenticación y autorización server-side y migrar el login de demostración.
+2. Diseñar el aislamiento multi-tenant en SQLite/Firestore y añadir reglas de seguridad.
+3. Definir fuente de verdad, sincronización y recuperación ante conflictos.
+4. Agregar validación por ruta y pruebas de negocio/end-to-end.
+5. Resolver los avisos de seguridad de dependencias tras revisar el árbol de advisories.
+
+El build y el smoke test actuales pasan; los hallazgos críticos de autenticación y aislamiento multi-tenant siguen abiertos.
