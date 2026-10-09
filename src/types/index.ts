@@ -66,6 +66,10 @@ export interface User {
   negocioId: string | null; // null = superadmin
   email: string;
   nombre: string;
+  /** Alias de compatibilidad con módulos anteriores. */
+  name?: string;
+  /** Alias de compatibilidad con módulos anteriores. */
+  role?: UserRole;
   telefono?: string;
   rol: UserRole;
   pinAcceso?: string;
@@ -84,6 +88,15 @@ export interface TenantConfig {
 
 // ===================== BUSINESS ENTITIES =====================
 export type CourtStatus = 'libre' | 'reservada' | 'en_juego' | 'mantenimiento';
+
+/** Modelo legacy usado por la grilla de canchas; migrar gradualmente a Espacio. */
+export interface Court {
+  id: string;
+  name: string;
+  type: string;
+  status: CourtStatus;
+  currentReservationId?: string;
+}
 export type PaymentStatus = 'pendiente' | 'senado' | 'pagado';
 export type PaymentMethod = 'efectivo' | 'transferencia' | 'mercadopago' | 'tarjeta';
 export type CashMovementType = 'ingreso' | 'egreso';
@@ -110,7 +123,8 @@ export interface Espacio {
 
 export interface Client {
   id: string;
-  negocioId: string;
+  /** Opcional mientras se migran los registros legacy al modelo multi-tenant. */
+  negocioId?: string;
   name: string;
   phone: string;
   email?: string;
@@ -123,8 +137,10 @@ export interface Client {
 
 export interface Reservation {
   id: string;
-  negocioId: string;
-  espacioId: string;
+  /** Campos legacy/tenant pendientes de normalización. */
+  negocioId?: string;
+  espacioId?: string;
+  courtId?: string;
   clientId: string;
   clientName: string;
   clientPhone: string;
@@ -139,7 +155,7 @@ export interface Reservation {
   saldoPendiente?: number;
   qrToken?: string;
   notes?: string;
-  estado: 'pendiente' | 'confirmada' | 'en_curso' | 'completada' | 'cancelada';
+  estado?: 'pendiente' | 'confirmada' | 'en_curso' | 'completada' | 'cancelada';
   createdAt: string;
 }
 
@@ -177,7 +193,7 @@ export interface Mesa {
 
 export interface CashSession {
   id: string;
-  negocioId: string;
+  negocioId?: string;
   openedAt: string;
   closedAt?: string;
   openingAmount: number;
@@ -191,7 +207,7 @@ export interface CashSession {
 export interface CashMovement {
   id: string;
   sessionId: string;
-  negocioId: string;
+  negocioId?: string;
   type: CashMovementType;
   amount: number;
   method: PaymentMethod;
@@ -204,7 +220,8 @@ export interface CashMovement {
 }
 
 export interface PriceConfig {
-  espacioId: string;
+  espacioId?: string;
+  courtId?: string;
   dayPrice: number;
   nightPrice: number;
   nightStartHour: number;
