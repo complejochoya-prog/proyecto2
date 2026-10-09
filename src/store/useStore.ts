@@ -479,7 +479,7 @@ export const useStore = create<AppState>()(
           id: `cm${Date.now()}`,
           sessionId: session.id,
           createdAt: new Date().toISOString(),
-          createdBy: get().currentUser.name,
+          createdBy: get().currentUser.name || get().currentUser.nombre,
         };
         set((s) => ({
           cashMovements: [...s.cashMovements, full],
