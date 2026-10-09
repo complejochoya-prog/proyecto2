@@ -4,8 +4,30 @@ import db from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const allowedOrigins = (process.env.API_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors());
+app.disable('x-powered-by');
+app.use(cors({
+  origin(origin, callback) {
+    // Non-browser clients (health checks/server-to-server) do not send Origin.
+    if (!origin) return callback(null, true);
+    // Keep local development convenient; production requires an explicit allowlist.
+    if (process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+}));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
 app.use(express.json({ limit: '2mb' }));
 
 // Helpers
