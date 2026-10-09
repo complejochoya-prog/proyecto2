@@ -41,7 +41,10 @@ app.post('/api/auth/login', (req, res) => {
   const emailMatches = typeof email === 'string' && email.trim().toLowerCase() === ownerEmail;
   const passwordMatches = typeof password === 'string' && password === ownerPassword;
   const pinMatches = typeof pin === 'string' && pin === ownerPin;
-  if (!emailMatches || (password !== undefined ? !passwordMatches : !pinMatches)) {
+  const credentialsMatch = password !== undefined
+    ? emailMatches && passwordMatches
+    : pinMatches;
+  if (!credentialsMatch) {
     return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
   }
   const isSuperadmin = scope === 'superadmin';
