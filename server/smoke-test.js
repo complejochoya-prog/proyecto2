@@ -116,18 +116,51 @@ try {
   assert.equal(updatedOrder.total, 789);
   assert.equal(updatedOrder.items[0].id, 'smoke-item-updated');
 
+  const offer = await request('/api/ofertas', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      id: 'smoke-offer',
+      titulo: 'Oferta inicial',
+      descripcion: 'Debe conservarse',
+      descuentoPct: 10,
+      descuentoMonto: 100,
+      activo: true,
+      fechaDesde: '2026-10-01',
+      fechaHasta: '2026-10-31',
+      diasSemana: [1, 2, 3],
+      horaDesde: '10:00',
+      horaHasta: '12:00',
+    }),
+  });
+  assert.equal(offer.id, 'smoke-offer');
+
+  const updatedOffer = await request('/api/ofertas/smoke-offer', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ titulo: 'Oferta editada', activo: false }),
+  });
+  assert.equal(updatedOffer.titulo, 'Oferta editada');
+  assert.equal(updatedOffer.activo, false);
+  assert.equal(updatedOffer.descripcion, 'Debe conservarse');
+  assert.equal(updatedOffer.descuentoPct, 10);
+  assert.deepEqual(updatedOffer.diasSemana, [1, 2, 3]);
+
   const snapshot = await request('/api/sync');
   assert.ok(Array.isArray(snapshot.productos));
   assert.ok(Array.isArray(snapshot.pedidos));
 
+  await request('/api/ofertas/smoke-offer', { method: 'DELETE' });
   await request('/api/pedidos/smoke-order', { method: 'DELETE' });
   await request('/api/productos/smoke-product', { method: 'DELETE' });
   const remainingOrders = await request('/api/pedidos');
+  const remainingOffers = await request('/api/ofertas');
   const remainingProducts = await request('/api/productos');
   assert.ok(!remainingOrders.some((item) => item.id === 'smoke-order'));
+  assert.ok(!remainingOffers.some((item) => item.id === 'smoke-offer'));
   assert.ok(!remainingProducts.some((item) => item.id === 'smoke-product'));
 
-  console.log('API smoke tests passed: health, SQLite reads, product CRUD, transactional order/items CRUD, sync snapshot.');
+  console.log('API smoke tests passed: health, SQLite reads, product CRUD, transactional order/items CRUD, partial offer updates, sync snapshot.');
 } finally {
   if (child.exitCode === null) {
     child.kill('SIGTERM');
