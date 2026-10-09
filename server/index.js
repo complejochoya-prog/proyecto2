@@ -29,6 +29,32 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: '2mb' }));
+// Owner login is configured only through server-side environment variables; never commit credentials.
+app.post('/api/auth/login', (req, res) => {
+  const { email, password, pin, scope } = req.body || {};
+  const ownerEmail = (process.env.OWNER_EMAIL || '').trim().toLowerCase();
+  const ownerPassword = process.env.OWNER_PASSWORD || '';
+  const ownerPin = process.env.OWNER_PIN || '';
+  if (!ownerEmail || !ownerPassword || !ownerPin) {
+    return res.status(503).json({ error: 'owner_auth_not_configured', message: 'El acceso del propietario aún no está configurado en el servidor.' });
+  }
+  const emailMatches = typeof email === 'string' && email.trim().toLowerCase() === ownerEmail;
+  const passwordMatches = typeof password === 'string' && password === ownerPassword;
+  const pinMatches = typeof pin === 'string' && pin === ownerPin;
+  if (!emailMatches || (password !== undefined ? !passwordMatches : !pinMatches)) {
+    return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
+  }
+  const isSuperadmin = scope === 'superadmin';
+  return res.json({
+    id: isSuperadmin ? 'owner-superadmin' : 'owner-giovanni',
+    negocioId: isSuperadmin ? null : 'giovanni',
+    email: ownerEmail,
+    nombre: 'Propietario',
+    rol: isSuperadmin ? 'superadmin' : 'admin',
+    isActive: true
+  });
+});
+
 app.use('/api', (req, res, next) => {
   if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
   const body = req.body;

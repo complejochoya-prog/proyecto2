@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, UserRole } from '../types';
+import { api } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  loginWithPin: (pin: string) => Promise<boolean>;
+  login: (email: string, password: string, scope?: 'tenant' | 'superadmin') => Promise<boolean>;
+  loginWithPin: (pin: string, scope?: 'tenant' | 'superadmin') => Promise<boolean>;
   logout: () => void;
   hasRole: (...roles: UserRole[]) => boolean;
 }
@@ -95,7 +96,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, scope: 'tenant' | 'superadmin' = 'tenant'): Promise<boolean> => {
+    try {
+      const owner = await api.loginOwner({ email: email.trim(), password, scope });
+      if (owner) {
+        setUser(owner);
+        localStorage.setItem('giovanni-auth', JSON.stringify(owner));
+        return true;
+      }
+    } catch {
+      // If the owner account is not configured or credentials don't match, try legacy staff accounts.
+    }
     const found = MOCK_USERS.find(
       (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
     );
@@ -108,7 +119,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const loginWithPin = async (pin: string): Promise<boolean> => {
+  const loginWithPin = async (pin: string, scope: 'tenant' | 'superadmin' = 'tenant'): Promise<boolean> => {
+    try {
+      const owner = await api.loginOwner({ pin, scope });
+      if (owner) {
+        setUser(owner);
+        localStorage.setItem('giovanni-auth', JSON.stringify(owner));
+        return true;
+      }
+    } catch {
+      // If owner PIN isn't configured or doesn't match, try legacy staff PINs.
+    }
     const found = MOCK_USERS.find((u) => u.pinAcceso === pin && u.isActive);
     if (found) {
       const { password: _, ...safeUser } = found;

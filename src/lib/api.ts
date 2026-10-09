@@ -13,6 +13,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  loginOwner: (data: { email?: string; password?: string; pin?: string; scope: 'tenant' | 'superadmin' }) =>
+    request<any>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   health: () => request<{ ok: boolean }>('/health'),
   sync: () => request<SyncPayload>('/sync'),
 

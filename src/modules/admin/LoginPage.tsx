@@ -21,9 +21,9 @@ export default function LoginPage() {
 
     let ok = false;
     if (mode === 'email') {
-      ok = await login(email, password);
+      ok = await login(email, password, negocioId ? 'tenant' : 'superadmin');
     } else {
-      ok = await loginWithPin(pin);
+      ok = await loginWithPin(pin, negocioId ? 'tenant' : 'superadmin');
     }
 
     setLoading(false);
@@ -88,9 +88,11 @@ export default function LoginPage() {
             {mode === 'email' ? (
               <>
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">Email</label>
+                  <label className="block text-sm font-medium mb-1.5">Correo o usuario</label>
                   <input
-                    type="email"
+                    type="text"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -144,7 +146,7 @@ export default function LoginPage() {
             <p><strong>cocina</strong> → KDS Cocina</p>
             <p><strong>delivery</strong> → App Delivery</p>
             <p><strong>super</strong> → SuperAdmin SaaS</p>
-            <p className="pt-1">También podés usar PIN: 1234 (admin), 5678 (mozo), 7890 (delivery)</p>
+            <p className="pt-1">PIN de prueba: 0000 (super), 1234 (admin), 5678 (mozo), 9012 (cocina), 7890 (delivery), 3456 (recepción)</p>
           </div>
         </div>
       </div>

@@ -235,3 +235,15 @@ npm run server
 Al abrir la app, `DbSync` baja un snapshot desde `/api/sync` y cada 5s refresca.
 Los cambios de pedidos, mesas y reservas se envían a la API automáticamente.
 Si la API no está, la app sigue con datos locales (IndexedDB).
+
+
+## Acceso del propietario (configuración privada)
+
+El acceso principal se configura en el servidor con las variables `OWNER_EMAIL`, `OWNER_PASSWORD` y `OWNER_PIN`. No guardar la contraseña en el repositorio ni en variables `VITE_*`, porque esas se publican en el navegador.
+
+- `/giovanni/login`: autentica al propietario como administrador del Complejo Giovanni.
+- `/login`: autentica al mismo propietario como superadministrador.
+- En el panel del proveedor de hosting, cargar esas tres variables en el entorno privado del servicio API y reiniciar/redeployar el backend.
+- El formulario acepta correo o nombre de usuario; los usuarios de personal demo existentes siguen funcionando durante la migración.
+
+**Importante:** esta ruta valida las credenciales del propietario, pero las demás rutas CRUD de la API todavía requieren una fase adicional de autenticación/autorización en servidor antes de usar datos reales en producción.
