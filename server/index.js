@@ -437,14 +437,30 @@ app.post('/api/ofertas', (req, res) => {
 
 app.put('/api/ofertas/:id', (req, res) => {
   const o = req.body;
+  const current = db.prepare('SELECT * FROM ofertas WHERE id=?').get(req.params.id);
+  if (!current) return res.status(404).json({ error: 'not_found' });
+
   db.prepare(
-    `UPDATE ofertas SET titulo=?, descripcion=?, descuentoPct=?, activo=?, fechaDesde=?, fechaHasta=?, diasSemana=?, horaDesde=?, horaHasta=? WHERE id=?`
+    `UPDATE ofertas SET titulo=?, descripcion=?, descuentoPct=?, descuentoMonto=?, activo=?, fechaDesde=?, fechaHasta=?, diasSemana=?, horaDesde=?, horaHasta=? WHERE id=?`
   ).run(
-    o.titulo, o.descripcion, o.descuentoPct, o.activo ? 1 : 0,
-    o.fechaDesde, o.fechaHasta, o.diasSemana ? JSON.stringify(o.diasSemana) : null,
-    o.horaDesde, o.horaHasta, req.params.id
+    o.titulo ?? current.titulo,
+    o.descripcion ?? current.descripcion,
+    o.descuentoPct ?? current.descuentoPct,
+    o.descuentoMonto ?? current.descuentoMonto,
+    o.activo !== undefined ? (o.activo ? 1 : 0) : current.activo,
+    o.fechaDesde ?? current.fechaDesde,
+    o.fechaHasta ?? current.fechaHasta,
+    o.diasSemana !== undefined ? (o.diasSemana ? JSON.stringify(o.diasSemana) : null) : current.diasSemana,
+    o.horaDesde ?? current.horaDesde,
+    o.horaHasta ?? current.horaHasta,
+    req.params.id
   );
-  res.json({ ok: true });
+  const updated = db.prepare('SELECT * FROM ofertas WHERE id=?').get(req.params.id);
+  res.json({
+    ...updated,
+    activo: !!updated.activo,
+    diasSemana: updated.diasSemana ? JSON.parse(updated.diasSemana) : undefined,
+  });
 });
 
 app.delete('/api/ofertas/:id', (req, res) => {
