@@ -96,6 +96,26 @@ try {
   assert.equal(order.items.length, 1);
   assert.equal(order.items[0].subtotal, 456);
 
+  const updatedOrder = await request('/api/pedidos/smoke-order', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      estado: 'confirmado',
+      total: 789,
+      items: [{
+        id: 'smoke-item-updated',
+        productoId: 'smoke-product',
+        nombre: 'Producto actualizado',
+        cantidad: 1,
+        precioUnitario: 789,
+        subtotal: 789,
+      }],
+    }),
+  });
+  assert.equal(updatedOrder.estado, 'confirmado');
+  assert.equal(updatedOrder.total, 789);
+  assert.equal(updatedOrder.items[0].id, 'smoke-item-updated');
+
   const snapshot = await request('/api/sync');
   assert.ok(Array.isArray(snapshot.productos));
   assert.ok(Array.isArray(snapshot.pedidos));
@@ -107,7 +127,7 @@ try {
   assert.ok(!remainingOrders.some((item) => item.id === 'smoke-order'));
   assert.ok(!remainingProducts.some((item) => item.id === 'smoke-product'));
 
-  console.log('API smoke tests passed: health, SQLite reads, product CRUD, order/items CRUD, sync snapshot.');
+  console.log('API smoke tests passed: health, SQLite reads, product CRUD, transactional order/items CRUD, sync snapshot.');
 } finally {
   if (child.exitCode === null) {
     child.kill('SIGTERM');
