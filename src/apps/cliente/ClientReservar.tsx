@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEspaciosStore } from '../../store/useEspaciosStore';
 import { useStore } from '../../store/useStore';
 import { Icon } from '../../components/ui/Icon';
+import type { Reservation } from '../../types';
 
 function formatMoney(n: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -65,14 +66,14 @@ function metaFor(type: string) {
 function getAvailableHours(
   date: string,
   espacioId: string,
-  reservations: { courtId: string; date: string; startTime: string }[]
+  reservations: Pick<Reservation, 'courtId' | 'espacioId' | 'date' | 'startTime'>[]
 ) {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   const currentHour = now.getHours();
   const currentMin = now.getMinutes();
   const booked = new Set(
-    reservations.filter((r) => r.courtId === espacioId && r.date === date).map((r) => r.startTime)
+    reservations.filter((r) => (r.courtId === espacioId || r.espacioId === espacioId) && r.date === date).map((r) => r.startTime)
   );
   return ALL_HOURS.filter((h) => {
     if (booked.has(h)) return false;
@@ -134,7 +135,7 @@ export default function ClientReservar() {
     ? reservations
         .filter(
           (r) =>
-            (r.courtId === espacioId || (r as any).espacioId === espacioId) &&
+            (r.courtId === espacioId || r.espacioId === espacioId) &&
             r.date === date &&
             r.startTime === startTime
         )
@@ -156,7 +157,7 @@ export default function ClientReservar() {
     }
   }, [date, espacioId, availableHours.join(',')]);
 
-  const dayPrice = (id: string, type?: string) => {
+  const dayPrice = (id: string) => {
     const p = config.prices?.find((x) => x.courtId === id);
     return p?.dayPrice ?? espacios.find((e) => e.id === id)?.precioHora ?? 12000;
   };
