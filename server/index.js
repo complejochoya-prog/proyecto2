@@ -29,6 +29,17 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: '2mb' }));
+app.use('/api', (req, res, next) => {
+  if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
+  const body = req.body;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return res.status(400).json({
+      error: 'invalid_request',
+      message: 'El cuerpo de la solicitud debe ser un objeto JSON.',
+    });
+  }
+  next();
+});
 
 // Helpers
 const rowProducto = (r) =>
