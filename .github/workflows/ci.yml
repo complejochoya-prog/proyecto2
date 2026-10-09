@@ -35,3 +35,6 @@ jobs:
 
       - name: Typecheck and build production bundle
         run: npm run build
+
+      - name: Smoke test SQLite API
+        run: npm run test:smoke
