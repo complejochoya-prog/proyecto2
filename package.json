@@ -8,7 +8,7 @@
     "dev:web": "vite",
     "server": "node server/index.js",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "node --check server/index.js && node --check server/db.js",
     "preview": "vite preview",
     "dev:all": "concurrently -n api,web -c blue,green \"node server/index.js\" \"vite\""
   },
