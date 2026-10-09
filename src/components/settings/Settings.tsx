@@ -9,6 +9,8 @@ export function Settings() {
   const config = useStore((s) => s.config);
   const updateConfig = useStore((s) => s.updateConfig);
   const currentUser = useStore((s) => s.currentUser);
+  const displayName = currentUser.name || currentUser.nombre;
+  const displayRole = currentUser.role || currentUser.rol;
   const espacios = useEspaciosStore((s) => s.espacios);
 
   const schedules: DaySchedule[] =
@@ -188,14 +190,14 @@ export function Settings() {
         <div className="space-y-3">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white font-bold">
-              {currentUser.name.charAt(0)}
+              {displayName.charAt(0)}
             </div>
             <div className="flex-1">
-              <p className="font-medium">{currentUser.name}</p>
+              <p className="font-medium">{displayName}</p>
               <p className="text-xs text-slate-500">{currentUser.email}</p>
             </div>
             <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 capitalize">
-              {currentUser.role}
+              {displayRole}
             </span>
           </div>
           <p className="text-xs text-slate-500">
