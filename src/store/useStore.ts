@@ -1,10 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { idbStorage } from './idbStorage';
 import {
   persistReserva,
   updateReservaDb,
-  persistProducto,
   persistCliente,
   persistCajaSesion,
   persistCajaMovimiento,
@@ -273,9 +271,13 @@ const initialConfig: SystemConfig = {
 
 const currentUser: User = {
   id: 'u1',
+  negocioId: 'giovanni',
+  nombre: 'Admin Giovanni',
   name: 'Admin Giovanni',
   email: 'admin@complejogiovanni.com',
+  rol: 'admin',
   role: 'admin',
+  isActive: true,
 };
 
 interface AppState {
