@@ -69,7 +69,7 @@ export default function ClientMisReservas() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-bold">{getEspacioName(r.courtId)}</p>
+                      <p className="font-bold">{getEspacioName(r.espacioId || r.courtId || '')}</p>
                       <p className="text-sm text-slate-500">
                         {r.date} · {r.startTime} – {r.endTime}
                       </p>
