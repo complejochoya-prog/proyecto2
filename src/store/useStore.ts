@@ -378,7 +378,7 @@ export const useStore = create<AppState>()(
         set((s) => ({
           reservations: [...s.reservations, full],
         }));
-        get().updateCourtStatus(res.courtId, 'reservada', id);
+        if (res.courtId) get().updateCourtStatus(res.courtId, 'reservada', id);
         persistReserva(full).catch(() => {});
       },
 
@@ -443,7 +443,7 @@ export const useStore = create<AppState>()(
           openedAt: new Date().toISOString(),
           openingAmount: amount,
           status: 'abierta' as const,
-          openedBy: get().currentUser.name,
+          openedBy: get().currentUser.name || get().currentUser.nombre,
         };
         set({
           cashSession: sesion,
