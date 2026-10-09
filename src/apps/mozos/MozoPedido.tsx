@@ -66,12 +66,6 @@ export default function MozoPedido() {
     setTab('pedido');
   };
 
-  const handlePedirCuenta = () => {
-    if (mesa) updateMesaEstado(mesa.id, 'cuenta_pedida');
-    updatePedidoEstado(pedido.id, 'listo');
-    flash('Cuenta pedida');
-  };
-
   const handleCobrarYCerrar = () => {
     if (pedido.items.length === 0) {
       // Solo cerrar sin cobrar
