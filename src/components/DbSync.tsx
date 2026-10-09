@@ -29,7 +29,6 @@ export default function DbSync() {
     // 1. Iniciar sincronización en tiempo real con Firebase Firestore
     try {
       initFirestoreRealtimeSync();
-      setStatus('online');
     } catch (e) {
       console.warn('Error iniciando Firestore:', e);
     }
@@ -44,6 +43,7 @@ export default function DbSync() {
         const data = await api.sync();
         if (cancelled) return;
         errorCount = 0;
+        setStatus('online');
 
         const serialized = JSON.stringify(data);
         if (serialized === lastPayload) return;
@@ -60,6 +60,7 @@ export default function DbSync() {
         }
       } catch {
         errorCount++;
+        if (errorCount >= 3) setStatus('offline');
       }
     };
 
@@ -77,7 +78,7 @@ export default function DbSync() {
   if (status === 'online') return null;
   return (
     <div className="fixed bottom-20 right-3 z-[200] px-2.5 py-1 rounded-full text-[10px] font-medium shadow-lg bg-amber-500/90 text-black">
-      Conectando Firebase…
+      Conectando servicios…
     </div>
   );
 }
