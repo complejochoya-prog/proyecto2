@@ -1,14 +1,20 @@
-# Auditoría técnica inicial — proyecto2
+# Auditoría técnica — proyecto2
 
-Fecha: 2026-10-08. Rama: `audit/fixes-initial`. Base observada: `main` en `9232f06ef52447b1830b3ab09b1b969807f7830a`.
+Fecha: 2026-10-08. Rama de trabajo: `audit/fixes-initial`. PR: https://github.com/complejochoya-prog/proyecto2/pull/1
 
-## Alcance
-Inspección estática inicial de React/TypeScript/Vite, router, autenticación, guards, contexto tenant, sincronización Firestore, stores, API y servidor Express/SQLite. Aún no se ejecutaron build, lint ni pruebas, y no se revisaron las reglas de Firestore desplegadas.
+## Alcance y validación
+Revisión estática de React/TypeScript/Vite, router, autenticación, guards, contexto tenant, sincronización Firestore, stores, API y servidor Express/SQLite. Se agregó CI para ejecutar `npm ci`, `npm run lint` y `npm run build` en pull requests y pushes a `main`. Hasta que GitHub Actions ejecute el flujo, estos comandos no deben considerarse verificados.
 
-## Hallazgos priorizados
+## Cambios realizados en la rama
+- Corregidas las referencias PWA para usar el `public/favicon.svg` existente en lugar de recursos que no aparecían en el árbol revisado.
+- Mejorado el cierre de conexiones IndexedDB tras operaciones y ante cambios de versión.
+- Reemplazados comodines `*` de `better-sqlite3`, `concurrently`, `cors` y `express` por rangos compatibles con las versiones que ya estaban fijadas en el lockfile; sincronizados `package.json` y `package-lock.json`.
+- Añadido workflow CI de lint, typecheck y build.
+
+## Hallazgos pendientes prioritarios
 
 ### CRÍTICO: autenticación solo en frontend
-`src/context/AuthContext.tsx` define usuarios de demostración en el cliente y restaura sesión desde localStorage. Los guards React no protegen la API. `server/index.js` expone CRUD sin middleware de autenticación/autorización visible. No usar con datos reales hasta autenticar y autorizar en servidor.
+`src/context/AuthContext.tsx` define usuarios de demostración en el cliente y restaura sesión desde localStorage. Los guards React no protegen la API. `server/index.js` expone operaciones CRUD sin middleware de autenticación/autorización visible. No usar con datos reales hasta autenticar y autorizar en servidor.
 
 ### CRÍTICO: aislamiento multi-tenant incompleto
 El backend fija `negocioId: 'giovanni'` y usa tablas globales; `src/lib/firebaseSync.ts` usa colecciones globales sin partición por negocio. Riesgo de mezcla de datos. Requiere migración coordinada de SQLite, Firestore y reglas de seguridad.
@@ -17,32 +23,22 @@ El backend fija `negocioId: 'giovanni'` y usa tablas globales; `src/lib/firebase
 `server/index.js` usa `app.use(cors())`. Configurar orígenes permitidos por entorno una vez confirmados los dominios.
 
 ### ALTO: varias fuentes de persistencia
-`src/components/DbSync.tsx` combina Firestore y SQLite; `src/lib/firebaseSync.ts` importa datos locales cuando una colección está vacía. Puede haber carreras y divergencias. Definir una fuente de verdad y estrategia de migración.
+`src/components/DbSync.tsx` combina Firestore y SQLite; `src/lib/firebaseSync.ts` intenta sembrar colecciones vacías desde estado local. Puede haber carreras y divergencias. Definir fuente de verdad y estrategia de migración.
 
 ### ALTO: URL API por defecto local
 `src/lib/api.ts` usa `http://localhost:3001/api` si falta `VITE_API_URL`. En producción, localhost apunta al dispositivo del usuario. Configurar URL por entorno o ruta relativa/proxy.
 
-### ALTO: dependencias sin rango
-`package.json` utiliza `*` para Express, CORS y better-sqlite3. Fijar versiones probadas y validar el lockfile.
-
-### MEDIO: IndexedDB
-`src/store/idbStorage.ts` no cierra explícitamente conexiones tras operaciones. Mejorar ciclo de vida de conexiones.
-
 ### MEDIO: validación de API
-Las rutas CRUD no muestran una validación centralizada de esquemas; hay IDs basados en `Date.now()` y errores inconsistentes. Agregar validación, códigos de error uniformes y transacciones para pedidos/ítems.
+Las rutas CRUD no muestran validación centralizada de esquemas; hay IDs basados en `Date.now()` y errores inconsistentes. Agregar validación, códigos de error uniformes y transacciones para pedidos/ítems.
 
-### MEDIO: PWA
-`vite.config.ts` declara iconos que no aparecen en el árbol inicial inspeccionado. Verificar referencias y probar build/rutas de entrada por tenant.
+### MEDIO: pruebas de negocio ausentes
+Aún deben agregarse pruebas de autenticación/autorización, aislamiento tenant, caja, reservas, pedidos y sincronización. El workflow actual es una base de calidad, no reemplaza las pruebas funcionales.
 
-### MEDIO: pruebas
-`package.json` no define script de tests. Agregar pruebas de permisos, aislamiento tenant, caja, reservas, pedidos y sincronización.
+## Plan de remediación
+1. Implementar autenticación y autorización server-side antes de exponer operaciones con datos reales.
+2. Aislar datos por negocio en SQLite y Firestore, con reglas y pruebas de seguridad.
+3. Establecer fuente de verdad y recuperación ante conflictos de sincronización.
+4. Configurar API/CORS por entorno y validar entradas en cada ruta.
+5. Agregar pruebas de negocio e integrar cambios gradualmente.
 
-## Plan
-1. Cerrar autenticación/autorización server-side.
-2. Aislar datos por negocio en SQLite y Firestore y verificar reglas.
-3. Elegir fuente de verdad de persistencia.
-4. Fijar dependencias y configurar API/CORS/PWA por entorno.
-5. Validar entradas, uniformar errores y agregar pruebas/CI.
-6. Ejecutar instalación limpia, lint, build y tests.
-
-Los hallazgos críticos requieren cambios coordinados; no se consideran resueltos por modificar solo la interfaz.
+Los hallazgos críticos no se consideran resueltos por ajustes de frontend ni por este primer conjunto de mejoras.
